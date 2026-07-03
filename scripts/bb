@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""Small command wrapper for the publishable SQL benchmark harness."""
+
+from __future__ import annotations
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def run(cmd: list[str]) -> int:
+    print("$ " + " ".join(cmd), flush=True)
+    proc = subprocess.run(cmd, cwd=str(ROOT), text=True, check=False)
+    return proc.returncode
+
+
+def command_benchmark(args: argparse.Namespace) -> int:
+    if args.benchmark_command == "list":
+        return run([sys.executable, str(ROOT / "scripts" / "setup_sql_benchmark.py"), "--list"])
+
+    if args.benchmark_command == "setup":
+        cmd = [
+            sys.executable,
+            str(ROOT / "scripts" / "setup_sql_benchmark.py"),
+            "--name",
+            args.name,
+        ]
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.no_extract:
+            cmd.append("--no-extract")
+        if args.force:
+            cmd.append("--force")
+        return run(cmd)
+
+    if args.benchmark_command in {"smoke", "run"}:
+        limit = args.limit
+        if args.benchmark_command == "smoke" and limit is None:
+            limit = 5
+        cmd = [
+            sys.executable,
+            str(ROOT / "scripts" / "run_sql_benchmark.py"),
+            "--benchmark",
+            args.name,
+            "--model",
+            args.model,
+            "--provider",
+            args.provider,
+            "--track",
+            args.track,
+            "--workers",
+            str(args.workers),
+            "--max-tokens",
+            str(args.max_tokens),
+            "--timeout",
+            str(args.timeout),
+        ]
+        if limit is not None:
+            cmd += ["--limit", str(limit)]
+        if args.droid_cwd_mode:
+            cmd += ["--droid-cwd-mode", args.droid_cwd_mode]
+        return run(cmd)
+
+    if args.benchmark_command == "eval":
+        cmd = [
+            sys.executable,
+            str(ROOT / "scripts" / "eval_sql_benchmark.py"),
+            "--run-dir",
+            args.run_dir,
+            "--split",
+            args.split,
+        ]
+        if args.name:
+            cmd += ["--benchmark", args.name]
+        return run(cmd)
+
+    if args.benchmark_command == "report":
+        cmd = [
+            sys.executable,
+            str(ROOT / "scripts" / "report_sql_benchmarks.py"),
+            "--runs",
+            *args.runs,
+        ]
+        if args.output_stem:
+            cmd += ["--output-stem", args.output_stem]
+        return run(cmd)
+
+    raise SystemExit(f"unknown benchmark command: {args.benchmark_command}")
+
+
+def command_audit(_: argparse.Namespace) -> int:
+    return run([sys.executable, str(ROOT / "scripts" / "audit_benchmark_security.py")])
+
+
+def command_matrix(args: argparse.Namespace) -> int:
+    cmd = [
+        sys.executable,
+        str(ROOT / "scripts" / "run_external_sql_model_matrix.py"),
+        "--config",
+        args.config,
+        "--benchmarks",
+        *args.benchmarks,
+        "--track",
+        args.track,
+        "--limit",
+        str(args.limit),
+        "--workers",
+        str(args.workers),
+        "--max-tokens",
+        str(args.max_tokens),
+    ]
+    if args.output_stem:
+        cmd += ["--output-stem", args.output_stem]
+    return run(cmd)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="bb")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    audit = sub.add_parser("audit", help="audit downloaded benchmark inputs")
+    audit.set_defaults(func=command_audit)
+
+    matrix = sub.add_parser("matrix", help="run a bounded model matrix")
+    matrix.add_argument("--config", default="configs/models.example.json")
+    matrix.add_argument("--benchmarks", nargs="+", default=["bird-mini-dev", "kaggledbqa"])
+    matrix.add_argument("--track", default="schema-plan", choices=["raw", "schema-plan"])
+    matrix.add_argument("--limit", type=int, default=5)
+    matrix.add_argument("--workers", type=int, default=1)
+    matrix.add_argument("--max-tokens", type=int, default=2048)
+    matrix.add_argument("--output-stem")
+    matrix.set_defaults(func=command_matrix)
+
+    benchmark = sub.add_parser("benchmark", help="setup, run, evaluate, and report SQL benchmarks")
+    benchmark_sub = benchmark.add_subparsers(dest="benchmark_command", required=True)
+
+    benchmark_list = benchmark_sub.add_parser("list", help="list registered benchmarks")
+    benchmark_list.set_defaults(func=command_benchmark)
+
+    benchmark_setup = benchmark_sub.add_parser("setup", help="clone or download benchmark data")
+    benchmark_setup.add_argument("--name", required=True, help="defog, kaggledbqa, bird-mini-dev, spider2-dbt, or all")
+    benchmark_setup.add_argument("--dry-run", action="store_true")
+    benchmark_setup.add_argument("--no-extract", action="store_true")
+    benchmark_setup.add_argument("--force", action="store_true")
+    benchmark_setup.set_defaults(func=command_benchmark)
+
+    def add_run_args(run_parser: argparse.ArgumentParser) -> None:
+        run_parser.add_argument("--name", required=True)
+        run_parser.add_argument("--model", required=True)
+        run_parser.add_argument("--provider", choices=["openrouter", "droid", "prompt-only"], default="openrouter")
+        run_parser.add_argument("--track", choices=["raw", "schema-plan"], default="schema-plan")
+        run_parser.add_argument("--limit", type=int)
+        run_parser.add_argument("--workers", type=int, default=1)
+        run_parser.add_argument("--max-tokens", type=int, default=2048)
+        run_parser.add_argument("--timeout", type=int, default=240)
+        run_parser.add_argument("--droid-cwd-mode", choices=["scrubbed", "repo"], default="scrubbed")
+        run_parser.set_defaults(func=command_benchmark)
+
+    benchmark_smoke = benchmark_sub.add_parser("smoke", help="run a small benchmark sample; defaults to --limit 5")
+    add_run_args(benchmark_smoke)
+
+    benchmark_run = benchmark_sub.add_parser("run", help="run a registered external benchmark")
+    add_run_args(benchmark_run)
+
+    benchmark_eval = benchmark_sub.add_parser("eval", help="evaluate a benchmark run")
+    benchmark_eval.add_argument("--run-dir", required=True)
+    benchmark_eval.add_argument("--name")
+    benchmark_eval.add_argument("--split", default="test")
+    benchmark_eval.set_defaults(func=command_benchmark)
+
+    benchmark_report = benchmark_sub.add_parser("report", help="build a multi-run report")
+    benchmark_report.add_argument("--runs", nargs="+", required=True)
+    benchmark_report.add_argument("--output-stem")
+    benchmark_report.set_defaults(func=command_benchmark)
+
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

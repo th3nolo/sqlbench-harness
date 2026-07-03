@@ -1,0 +1,62 @@
+{
+  "checked_at_utc": "2026-07-03T23:16:23.724342+00:00",
+  "generated_from": "https://openrouter.ai/api/v1/models",
+  "models": {
+    "deepseek/deepseek-v4-flash": {
+      "completion_per_million_usd": 0.18,
+      "context_length": 1048576,
+      "created": "2026-04-24",
+      "name": "DeepSeek: DeepSeek V4 Flash",
+      "prompt_per_million_usd": 0.09
+    },
+    "deepseek/deepseek-v4-pro": {
+      "completion_per_million_usd": 0.87,
+      "context_length": 1048576,
+      "created": "2026-04-24",
+      "name": "DeepSeek: DeepSeek V4 Pro",
+      "prompt_per_million_usd": 0.435
+    },
+    "minimax/minimax-m2.7": {
+      "completion_per_million_usd": 0.72,
+      "context_length": 204800,
+      "created": "2026-03-18",
+      "name": "MiniMax: MiniMax M2.7",
+      "prompt_per_million_usd": 0.18
+    },
+    "minimax/minimax-m3": {
+      "completion_per_million_usd": 1.2,
+      "context_length": 1048576,
+      "created": "2026-05-31",
+      "name": "MiniMax: MiniMax M3",
+      "prompt_per_million_usd": 0.3
+    },
+    "moonshotai/kimi-k2.7-code": {
+      "completion_per_million_usd": 3.5,
+      "context_length": 262144,
+      "created": "2026-06-12",
+      "name": "MoonshotAI: Kimi K2.7 Code",
+      "prompt_per_million_usd": 0.74
+    },
+    "poolside/laguna-xs-2.1:free": {
+      "completion_per_million_usd": 0.0,
+      "context_length": 262144,
+      "created": "2026-07-02",
+      "name": "Poolside: Laguna XS 2.1 (free)",
+      "prompt_per_million_usd": 0.0
+    },
+    "z-ai/glm-4.7-flash": {
+      "completion_per_million_usd": 0.39999999999999997,
+      "context_length": 202752,
+      "created": "2026-01-19",
+      "name": "Z.ai: GLM 4.7 Flash",
+      "prompt_per_million_usd": 0.06
+    },
+    "z-ai/glm-5.2": {
+      "completion_per_million_usd": 3.0,
+      "context_length": 1048576,
+      "created": "2026-06-16",
+      "name": "Z.ai: GLM 5.2",
+      "prompt_per_million_usd": 0.9299999999999999
+    }
+  }
+}

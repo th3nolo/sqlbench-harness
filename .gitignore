@@ -1,0 +1,26 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local benchmark data and vendored upstream repositories.
+benchmarks/
+vendor/
+data/
+
+# Raw runs, logs, and generated reports can contain prompts, provider output,
+# local paths, or benchmark-derived content. Curate publishable summaries into
+# docs/ or findings/ instead.
+results/
+security/reports/*.json
+security/locks/
+*.log
+
+# Local editor and OS state.
+.DS_Store
+.idea/
+.vscode/

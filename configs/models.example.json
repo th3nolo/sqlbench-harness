@@ -1,0 +1,17 @@
+{
+  "name": "external_sql_models_20260703",
+  "description": "OpenRouter models selected for external SQL benchmark smokes.",
+  "models": [
+    "poolside/laguna-xs-2.1:free",
+    "deepseek/deepseek-v4-flash",
+    "z-ai/glm-4.7-flash",
+    "minimax/minimax-m2.7",
+    "minimax/minimax-m3",
+    "deepseek/deepseek-v4-pro",
+    "z-ai/glm-5.2",
+    "moonshotai/kimi-k2.7-code"
+  ],
+  "retrieval": {
+    "embed_model": "qwen/qwen3-embedding-8b"
+  }
+}

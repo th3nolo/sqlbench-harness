@@ -1,0 +1,13 @@
+datasets
+func_timeout
+mysql-connector-python
+numpy
+openai
+pandas
+python-dotenv
+sql_metadata
+sqlglot
+sqlparse
+tabulate
+tiktoken
+tqdm
