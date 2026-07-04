@@ -56,6 +56,8 @@ Set `OPENROUTER_API_KEY` in `.env` for OpenRouter runs.
 
 Use `--limit` for bounded checks before paying for larger runs. Use full benchmark splits before making public ranking claims.
 
+For a full split evaluation, replace `--limit 5` with `--full`.
+
 ## Result Classes
 
 - `raw`: question, evidence, dialect, and visible schema context.

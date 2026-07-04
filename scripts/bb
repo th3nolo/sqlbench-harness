@@ -97,6 +97,10 @@ def command_audit(_: argparse.Namespace) -> int:
 
 
 def command_matrix(args: argparse.Namespace) -> int:
+    if args.full and args.limit is not None:
+        raise SystemExit("--full and --limit are mutually exclusive")
+    if not args.full and args.limit is None:
+        raise SystemExit("choose an evaluation scope: pass --limit N for a bounded evaluation or --full for the full split")
     cmd = [
         sys.executable,
         str(ROOT / "scripts" / "run_external_sql_model_matrix.py"),
@@ -106,13 +110,15 @@ def command_matrix(args: argparse.Namespace) -> int:
         *args.benchmarks,
         "--track",
         args.track,
-        "--limit",
-        str(args.limit),
         "--workers",
         str(args.workers),
         "--max-tokens",
         str(args.max_tokens),
     ]
+    if args.full:
+        cmd.append("--full")
+    else:
+        cmd += ["--limit", str(args.limit)]
     if args.output_stem:
         cmd += ["--output-stem", args.output_stem]
     return run(cmd)
@@ -125,11 +131,12 @@ def build_parser() -> argparse.ArgumentParser:
     audit = sub.add_parser("audit", help="audit downloaded benchmark inputs")
     audit.set_defaults(func=command_audit)
 
-    matrix = sub.add_parser("matrix", help="run a bounded model matrix")
+    matrix = sub.add_parser("matrix", help="run a model matrix")
     matrix.add_argument("--config", default="configs/models.example.json")
     matrix.add_argument("--benchmarks", nargs="+", default=["bird-mini-dev", "kaggledbqa"])
     matrix.add_argument("--track", default="schema-plan", choices=["raw", "schema-plan"])
-    matrix.add_argument("--limit", type=int, default=5)
+    matrix.add_argument("--limit", type=int, default=None, help="cases per benchmark/model for a bounded evaluation")
+    matrix.add_argument("--full", action="store_true", help="run each benchmark's full local split")
     matrix.add_argument("--workers", type=int, default=1)
     matrix.add_argument("--max-tokens", type=int, default=2048)
     matrix.add_argument("--output-stem")

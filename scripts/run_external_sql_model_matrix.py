@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a bounded external SQL benchmark matrix and report results."""
+"""Run an external SQL benchmark matrix and report results."""
 
 from __future__ import annotations
 
@@ -40,11 +40,18 @@ def main() -> int:
     parser.add_argument("--config", default="configs/external_sql_models_20260703.json")
     parser.add_argument("--benchmarks", nargs="+", default=["bird-mini-dev", "kaggledbqa"])
     parser.add_argument("--track", default="schema-plan", choices=["raw", "schema-plan"])
-    parser.add_argument("--limit", type=int, default=5)
+    parser.add_argument("--limit", type=int, default=None, help="cases per benchmark/model for a bounded evaluation")
+    parser.add_argument("--full", action="store_true", help="run each benchmark's full local split")
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--max-tokens", type=int, default=2048)
     parser.add_argument("--output-stem", default=None)
     args = parser.parse_args()
+    if args.full and args.limit is not None:
+        parser.error("--full and --limit are mutually exclusive")
+    if not args.full and args.limit is None:
+        parser.error("choose an evaluation scope: pass --limit N for a bounded evaluation or --full for the full split")
+
+    case_limit = None if args.full else args.limit
 
     models = load_models(ROOT / args.config)
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -55,7 +62,8 @@ def main() -> int:
         "benchmarks": args.benchmarks,
         "models": models,
         "track": args.track,
-        "limit": args.limit,
+        "limit": case_limit,
+        "scope": "full" if args.full else "bounded",
         "runs": [],
     }
 
@@ -75,13 +83,13 @@ def main() -> int:
                 "openrouter",
                 "--track",
                 args.track,
-                "--limit",
-                str(args.limit),
                 "--workers",
                 str(args.workers),
                 "--max-tokens",
                 str(args.max_tokens),
             ]
+            if case_limit is not None:
+                run_cmd += ["--limit", str(case_limit)]
             result = run(run_cmd)
             print(result.stdout, end="")
             run_dir = latest_run_dir(benchmark, model, args.track)
