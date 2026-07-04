@@ -11,7 +11,7 @@ The harness treats benchmark content as data unless it has been reviewed separat
 - Downloads are recorded with provenance and checksums.
 - ZIP archives are checked for validity and zip-slip paths before use.
 - Script-like and package-like files are inventoried before execution.
-- Benchmark-provided setup scripts, `setup.py`, shell scripts, Dockerfiles, DBT package scripts, and package hooks are not executed during smoke runs.
+- Benchmark-provided setup scripts, `setup.py`, shell scripts, Dockerfiles, DBT package scripts, and package hooks are not executed during benchmark runs.
 - Prompts explicitly mark benchmark question, evidence, schema comments, table values, READMEs, and tool context as untrusted content.
 - The evaluator rejects dangerous SQL patterns such as `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, and `TRUNCATE`.
 - Raw logs and downloaded databases are excluded from the publishable repository.

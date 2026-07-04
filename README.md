@@ -64,11 +64,11 @@ Use `--limit` for bounded checks before paying for larger runs. Use full benchma
 
 Only `raw` and non-gold tool-assisted runs should be considered for fair ranking. Diagnostic runs are useful for debugging the scaffold and estimating an upper bound.
 
-## July 3, 2026 Smoke Run
+## July 3, 2026 Pilot Evaluation
 
 - Scope: BIRD Mini-Dev and KaggleDBQA.
 - Sample: eight models, two datasets, five examples per dataset per model.
-- Calls: 80 model completions across the full smoke run.
+- Calls: 80 model completions across the pilot evaluation.
 - Failed runs or evals: 0.
 - Fairness blockers: 0.
 - Estimated provider cost: `$0.078203` for 80 model completions.
@@ -76,11 +76,11 @@ Only `raw` and non-gold tool-assisted runs should be considered for fair ranking
 - Best low-cost result: `deepseek/deepseek-v4-flash`, `6/10` for about `$0.001143`.
 - Free baseline: `poolside/laguna-xs-2.1:free`, `4/10` for `$0`.
 
-The July 3 result is a model-triage run, not a leaderboard claim.
+The July 3 result is a pilot evaluation, not a leaderboard claim.
 
 ## Documentation
 
 - `docs/HARNESS.md` explains the run and evaluation flow.
 - `docs/SECURITY.md` documents setup and dataset safety controls.
 - `docs/RANKING_POLICY.md` defines fair, tool-assisted, and diagnostic result classes.
-- `docs/RESULTS_2026_07_03.md` contains the curated smoke-run table.
+- `docs/RESULTS_2026_07_03.md` contains the curated pilot-evaluation table.
