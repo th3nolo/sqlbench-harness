@@ -1,27 +1,27 @@
-# SQLBench Harness
+# This repository compares LLM-generated SQL across public benchmarks with audited setup, execution scoring, and cost reporting.
 
-SQLBench Harness is a small, auditable framework for comparing LLM text-to-SQL behavior across public SQL benchmarks and model providers.
+The harness runs model-generated SQL against local benchmark databases, records provider usage, checks setup inputs for common supply-chain risks, and separates fair runs from diagnostic runs.
 
-The current implementation focuses on low-cost, reproducible smoke runs across BIRD Mini-Dev and KaggleDBQA, with setup provenance, dataset safety checks, prompt-injection boundaries, execution-accuracy scoring, and cost reporting.
+## What It Does
 
-## What This Repository Contains
+- Registers benchmark sources for BIRD Mini-Dev, KaggleDBQA, Defog SQL-Eval, and Spider 2.0 DBT.
+- Downloads or clones benchmark inputs with provenance records and local manifests.
+- Audits ZIP archives for validity and zip-slip paths before extraction.
+- Inventories script-like and package-like files in benchmark sources before any execution.
+- Wraps benchmark questions, evidence, schema text, comments, and table values as untrusted content in model prompts.
+- Runs OpenRouter models, Droid-backed models, or prompt-only dry runs through the same benchmark interface.
+- Evaluates SQLite predictions by executing predicted SQL and gold SQL on the same local database.
+- Reports exact-result accuracy, SQL execution errors, token usage, estimated provider cost, and fairness classification.
 
-- Benchmark registry and setup tooling for BIRD Mini-Dev, KaggleDBQA, Defog SQL-Eval, and Spider 2.0 DBT.
-- OpenRouter model runner with bounded prompts and optional schema-plan context.
-- SQLite execution evaluator for exact-result matching.
-- Security audit tooling for ZIP integrity, zip-slip, script/package inventory, and prompt-injection-like text.
-- Report generation for execution accuracy, SQL errors, token usage, estimated cost, and fairness classification.
-- A curated July 3, 2026 smoke matrix summary.
+## What It Excludes
 
-## What This Repository Does Not Contain
-
-- API keys or credentials.
+- API keys, credentials, and `.env` files.
 - Benchmark database downloads.
 - Vendored upstream benchmark repositories.
-- Raw provider request/response logs.
-- Oracle-assisted diagnostic outputs.
+- Raw provider request and response logs.
+- Oracle-assisted diagnostic output.
 
-## Quick Start
+## Setup
 
 ```bash
 python3.10 -m venv .venv
@@ -30,18 +30,22 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Add `OPENROUTER_API_KEY` to `.env`, then set up a benchmark:
+Set `OPENROUTER_API_KEY` in `.env` for OpenRouter runs.
+
+## Download Benchmarks
 
 ```bash
 ./scripts/bb benchmark setup --name bird-mini-dev
 ./scripts/bb benchmark setup --name kaggledbqa
-python scripts/audit_benchmark_security.py
+./scripts/bb audit
 ```
 
-Run a bounded smoke matrix:
+`./scripts/bb benchmark list` prints the registered benchmarks and expected local disk requirements.
+
+## Run A Model Matrix
 
 ```bash
-python scripts/run_external_sql_model_matrix.py \
+./scripts/bb matrix \
   --config configs/models.example.json \
   --benchmarks bird-mini-dev kaggledbqa \
   --track schema-plan \
@@ -50,19 +54,33 @@ python scripts/run_external_sql_model_matrix.py \
   --output-stem results/external_sql_matrix_schema_plan
 ```
 
-## Interpreting Results
+Use `--limit` for bounded checks before paying for larger runs. Use full benchmark splits before making public ranking claims.
 
-Smoke results are useful for model triage, prompt debugging, and cost estimation. They are not a public leaderboard. A leaderboard-quality result should use the full benchmark split, locked model versions, frozen pricing/catalog metadata, full audit reports, and reproducible run artifacts.
+## Result Classes
 
-See:
+- `raw`: question, evidence, dialect, and visible schema context.
+- `schema-plan`: raw context plus non-gold schema planning hints derived from question text and schema metadata.
+- `diagnostic`: any run that uses gold rows, gold-vs-prediction deltas, oracle-guided repair, or manual per-case intervention.
 
-- `docs/HARNESS.md`
-- `docs/SECURITY.md`
-- `docs/RANKING_POLICY.md`
-- `docs/RESULTS_2026_07_03.md`
+Only `raw` and non-gold tool-assisted runs should be considered for fair ranking. Diagnostic runs are useful for debugging the scaffold and estimating an upper bound.
 
-## Current Smoke Result
+## July 3, 2026 Smoke Run
 
-On July 3, 2026, the best smoke-run accuracy was `moonshotai/kimi-k2.7-code` at `7/10`. The best low-cost tradeoff was `deepseek/deepseek-v4-flash` at `6/10` for about `$0.001143` estimated provider cost.
+- Scope: BIRD Mini-Dev and KaggleDBQA.
+- Sample: eight models, two datasets, five examples per dataset per model.
+- Calls: 80 model completions across the full smoke run.
+- Failed runs or evals: 0.
+- Fairness blockers: 0.
+- Estimated provider cost: `$0.078203` for 80 model completions.
+- Best accuracy: `moonshotai/kimi-k2.7-code`, `7/10`.
+- Best low-cost result: `deepseek/deepseek-v4-flash`, `6/10` for about `$0.001143`.
+- Free baseline: `poolside/laguna-xs-2.1:free`, `4/10` for `$0`.
 
-The run used only non-gold schema-plan context and was classified as `fair_with_tools`.
+The July 3 result is a model-triage run, not a leaderboard claim.
+
+## Documentation
+
+- `docs/HARNESS.md` explains the run and evaluation flow.
+- `docs/SECURITY.md` documents setup and dataset safety controls.
+- `docs/RANKING_POLICY.md` defines fair, tool-assisted, and diagnostic result classes.
+- `docs/RESULTS_2026_07_03.md` contains the curated smoke-run table.
