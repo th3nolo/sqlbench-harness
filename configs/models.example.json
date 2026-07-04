@@ -1,6 +1,6 @@
 {
   "name": "external_sql_models_20260703",
-  "description": "OpenRouter models selected for external SQL benchmark smokes.",
+  "description": "OpenRouter models selected for external SQL benchmark pilot evaluations.",
   "models": [
     "poolside/laguna-xs-2.1:free",
     "deepseek/deepseek-v4-flash",

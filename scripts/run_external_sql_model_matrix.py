@@ -49,7 +49,7 @@ def main() -> int:
     if args.full and args.limit is not None:
         parser.error("--full and --limit are mutually exclusive")
     if not args.full and args.limit is None:
-        parser.error("choose an evaluation scope: pass --limit N for a bounded evaluation or --full for the full split")
+        parser.error("choose an evaluation scope: pass --limit N for a bounded evaluation or --full for the full-split evaluation")
 
     case_limit = None if args.full else args.limit
 

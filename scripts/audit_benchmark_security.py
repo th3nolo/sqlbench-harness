@@ -286,7 +286,7 @@ def classify(report: dict[str, Any]) -> None:
         "benchmark_scripts_executed": False,
         "model_runs_execute_upstream_code": False,
         "notes": [
-            "External SQL smoke runs read benchmark questions/schema/database files only.",
+            "External SQL benchmark runs read benchmark questions/schema/database files only.",
             "Do not run benchmark setup.py, package scripts, DBT package scripts, shell scripts, or Dockerfiles unless separately reviewed.",
             "Prompt templates wrap benchmark text as untrusted content and tell models not to follow instructions embedded in data.",
         ],

@@ -54,9 +54,9 @@ Set `OPENROUTER_API_KEY` in `.env` for OpenRouter runs.
   --output-stem results/external_sql_matrix_schema_plan
 ```
 
-Use `--limit` for bounded checks before paying for larger runs. Use full benchmark splits before making public ranking claims.
+Use `--limit` for bounded evaluations before paying for full-split evaluations. Use full-split benchmark runs before making public ranking claims.
 
-For a full split evaluation, replace `--limit 5` with `--full`.
+For a full-split evaluation, replace `--limit 5` with `--full`.
 
 ## Result Classes
 

@@ -37,9 +37,9 @@ def command_benchmark(args: argparse.Namespace) -> int:
             cmd.append("--force")
         return run(cmd)
 
-    if args.benchmark_command in {"smoke", "run"}:
+    if args.benchmark_command in {"pilot", "run"}:
         limit = args.limit
-        if args.benchmark_command == "smoke" and limit is None:
+        if args.benchmark_command == "pilot" and limit is None:
             limit = 5
         cmd = [
             sys.executable,
@@ -100,7 +100,7 @@ def command_matrix(args: argparse.Namespace) -> int:
     if args.full and args.limit is not None:
         raise SystemExit("--full and --limit are mutually exclusive")
     if not args.full and args.limit is None:
-        raise SystemExit("choose an evaluation scope: pass --limit N for a bounded evaluation or --full for the full split")
+        raise SystemExit("choose an evaluation scope: pass --limit N for a bounded evaluation or --full for the full-split evaluation")
     cmd = [
         sys.executable,
         str(ROOT / "scripts" / "run_external_sql_model_matrix.py"),
@@ -167,8 +167,8 @@ def build_parser() -> argparse.ArgumentParser:
         run_parser.add_argument("--droid-cwd-mode", choices=["scrubbed", "repo"], default="scrubbed")
         run_parser.set_defaults(func=command_benchmark)
 
-    benchmark_smoke = benchmark_sub.add_parser("smoke", help="run a small benchmark sample; defaults to --limit 5")
-    add_run_args(benchmark_smoke)
+    benchmark_pilot = benchmark_sub.add_parser("pilot", help="run a bounded pilot evaluation; defaults to --limit 5")
+    add_run_args(benchmark_pilot)
 
     benchmark_run = benchmark_sub.add_parser("run", help="run a registered external benchmark")
     add_run_args(benchmark_run)

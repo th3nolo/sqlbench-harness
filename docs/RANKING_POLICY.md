@@ -32,11 +32,11 @@ Diagnostic results are useful for estimating the ceiling of a scaffold, but they
 ## Reporting Rules
 
 - Do not compare raw SQL, tool-assisted SQL, and agentic DBT tracks as a single ranking.
-- Do not mix pilot samples with full benchmark runs.
+- Do not mix pilot subsets with full-split benchmark runs.
 - Report execution accuracy and SQL error count together.
 - Report estimated cost and cost per exact match when provider usage data is available.
 - Publish the security audit result with any benchmark result.
 
 ## Minimum Public Claim Standard
 
-The July 3, 2026 pilot matrix is suitable for internal model triage. A public ranking should rerun the full benchmark split or a pre-registered statistically meaningful subset with the same harness commit and locked configuration.
+The July 3, 2026 pilot matrix is suitable for internal model triage. A public ranking should rerun the full-split benchmark or a pre-registered statistically meaningful subset with the same harness commit and locked configuration.
