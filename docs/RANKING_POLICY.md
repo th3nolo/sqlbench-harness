@@ -9,7 +9,7 @@ A run is leaderboard eligible only when:
 - The benchmark split and case count are declared.
 - The model, provider, date, and catalog/pricing snapshot are recorded.
 - Prompt templates and harness commit are fixed.
-- No gold SQL, gold rows, or oracle diagnostics are sent to the model.
+- No gold SQL, gold rows, or gold-derived diagnostics are sent to the model.
 - The fairness audit has no high or critical findings.
 - Evaluation uses the benchmark-appropriate execution metric.
 
@@ -23,7 +23,7 @@ Runs are diagnostic only when they use:
 
 - Gold execution rows.
 - Gold-vs-prediction deltas.
-- Oracle-guided repairs.
+- Gold-guided repairs.
 - Manual per-case intervention.
 - Known answer templates.
 

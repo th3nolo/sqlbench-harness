@@ -16,7 +16,7 @@ The model receives the raw context plus non-gold schema planning hints. The sche
 
 ### Diagnostic Repair
 
-Repair loops may execute the predicted SQL and provide non-gold syntax or runtime errors back to the model. Runs that use gold execution comparison, gold rows, or oracle diagnostics must be reported as diagnostic upper-bound results, not leaderboard results.
+Repair loops may execute the predicted SQL and provide non-gold syntax or runtime errors back to the model. Runs that use gold execution comparison, gold rows, or gold-derived diagnostics must be reported as diagnostic upper-bound results, not leaderboard results.
 
 ## Core Workflow
 

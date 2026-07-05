@@ -1,4 +1,6 @@
-# This repository compares LLM-generated SQL across public benchmarks with audited setup, execution scoring, and cost reporting.
+# sqlbench-harness
+
+Benchmark harness for LLM-generated SQL across public benchmarks, with audited setup, execution scoring, and cost reporting.
 
 The harness runs model-generated SQL against local benchmark databases, records provider usage, checks setup inputs for common supply-chain risks, and separates fair runs from diagnostic runs.
 
@@ -10,7 +12,7 @@ The harness runs model-generated SQL against local benchmark databases, records 
 - Inventories script-like and package-like files in benchmark sources before any execution.
 - Wraps benchmark questions, evidence, schema text, comments, and table values as untrusted content in model prompts.
 - Runs OpenRouter models, Droid-backed models, or prompt-only dry runs through the same benchmark interface.
-- Evaluates SQLite predictions by executing predicted SQL and gold SQL on the same local database.
+- Evaluates SQLite predictions by executing predicted SQL and gold SQL (the benchmark's known-correct query) on the same local database.
 - Reports exact-result accuracy, SQL execution errors, token usage, estimated provider cost, and fairness classification.
 
 ## What It Excludes
@@ -19,7 +21,7 @@ The harness runs model-generated SQL against local benchmark databases, records 
 - Benchmark database downloads.
 - Vendored upstream benchmark repositories.
 - Raw provider request and response logs.
-- Oracle-assisted diagnostic output.
+- Gold-assisted diagnostic output.
 
 ## Setup
 
@@ -40,7 +42,7 @@ Set `OPENROUTER_API_KEY` in `.env` for OpenRouter runs.
 ./scripts/bb audit
 ```
 
-`./scripts/bb benchmark list` prints the registered benchmarks and expected local disk requirements.
+`./scripts/bb benchmark list` prints the registered benchmarks and expected disk usage.
 
 ## Run A Model Matrix
 
@@ -54,15 +56,13 @@ Set `OPENROUTER_API_KEY` in `.env` for OpenRouter runs.
   --output-stem results/external_sql_matrix_schema_plan
 ```
 
-Use `--limit` for bounded evaluations before paying for full-split evaluations. Use full-split benchmark runs before making public ranking claims.
-
-For a full-split evaluation, replace `--limit 5` with `--full`.
+Use `--limit` for a small bounded run first. For a full-split evaluation, replace `--limit 5` with `--full`; only full-split runs support public ranking claims.
 
 ## Result Classes
 
 - `raw`: question, evidence, dialect, and visible schema context.
-- `schema-plan`: raw context plus non-gold schema planning hints derived from question text and schema metadata.
-- `diagnostic`: any run that uses gold rows, gold-vs-prediction deltas, oracle-guided repair, or manual per-case intervention.
+- `schema-plan`: raw context plus schema-planning hints derived only from the question text and schema metadata, never from gold SQL.
+- `diagnostic`: any run that uses gold rows, gold-vs-prediction deltas, gold-guided repair, or manual per-case intervention.
 
 Only `raw` and non-gold tool-assisted runs should be considered for fair ranking. Diagnostic runs are useful for debugging the scaffold and estimating an upper bound.
 
