@@ -64,6 +64,7 @@ def row_for_run(path: Path) -> dict[str, Any]:
         "skipped": summary.get("skipped"),
         "exact_matches": exact,
         "execution_accuracy_pct": summary.get("execution_accuracy_pct"),
+        "result_comparison_version": summary.get("result_comparison_version", "legacy-unversioned"),
         "prediction_error_count": summary.get("prediction_error_count"),
         "estimated_cost_usd": cost,
         "cost_per_exact_match_usd": (float(cost) / exact) if cost is not None and exact else None,
@@ -100,22 +101,22 @@ def main() -> int:
     lines = [
         "# Multi-Benchmark SQL Results",
         "",
-        "Rows are grouped by benchmark and track. Do not compare plain SQL and agentic DBT rows as one leaderboard.",
+        "Rows are grouped by benchmark, track and result comparison version. Different versions are not directly comparable; these are harness scores, not benchmark-native scores.",
         "",
     ]
-    groups: list[tuple[str, str]] = []
+    groups: list[tuple[str, str, str]] = []
     for row in rows:
-        key = (row.get("benchmark") or "unknown", row.get("track") or "unknown")
+        key = (row.get("benchmark") or "unknown", row.get("track") or "unknown", row["result_comparison_version"])
         if key not in groups:
             groups.append(key)
-    for benchmark, track in groups:
+    for benchmark, track, comparison_version in groups:
         lines += [
-            f"## {benchmark} - {track}",
+            f"## {benchmark} - {track} - {comparison_version}",
             "",
             "| Model | Provider | Exact | Exec acc | Cost | Cost / exact | Tokens | Pred errors | Fairness | Run |",
             "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |",
         ]
-        for row in [item for item in rows if (item.get("benchmark") or "unknown", item.get("track") or "unknown") == (benchmark, track)]:
+        for row in [item for item in rows if (item.get("benchmark") or "unknown", item.get("track") or "unknown", item["result_comparison_version"]) == (benchmark, track, comparison_version)]:
             exact = "n/a"
             if row.get("exact_matches") is not None:
                 exact = f"{row['exact_matches']}/{row.get('total_evaluated') or 0}"
@@ -151,4 +152,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
