@@ -49,8 +49,27 @@ def execute_sqlite(db_path: Path, sql: str, *, instruction_limit: int = 500_000)
     if DANGEROUS_SQL.search(sql):
         return None, "dangerous SQL refused"
     conn = None
+    permission_denied = False
     try:
-        conn = sqlite3.connect(str(db_path))
+        # URI escaping keeps filename characters such as '?' and '#' literal.
+        # mode=ro also refuses missing databases instead of creating them.
+        conn = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)
+        conn.execute("PRAGMA query_only = ON")
+
+        def authorize(action: int, arg1: str | None, arg2: str | None,
+                      database: str | None, source: str | None) -> int:
+            nonlocal permission_denied
+            # Fail closed for writes, ATTACH, PRAGMA, transactions, and any
+            # future operation. SQL text matching is not a permission boundary.
+            if action == sqlite3.SQLITE_FUNCTION:
+                if (arg2 or "").lower() != "load_extension":
+                    return sqlite3.SQLITE_OK
+            elif action in {sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ, sqlite3.SQLITE_RECURSIVE}:
+                return sqlite3.SQLITE_OK
+            permission_denied = True
+            return sqlite3.SQLITE_DENY
+
+        conn.set_authorizer(authorize)
         remaining = {"count": instruction_limit}
 
         def progress_handler() -> int:
@@ -58,9 +77,14 @@ def execute_sqlite(db_path: Path, sql: str, *, instruction_limit: int = 500_000)
             return 1 if remaining["count"] <= 0 else 0
 
         conn.set_progress_handler(progress_handler, 100)
-        rows = conn.execute(sql).fetchall()
+        cursor = conn.execute(sql)
+        if cursor.description is None:
+            return None, "dangerous SQL refused"
+        rows = cursor.fetchall()
         return normalize_rows(rows), None
     except Exception as exc:
+        if permission_denied:
+            return None, "dangerous SQL refused"
         return None, str(exc)
     finally:
         if conn is not None:
