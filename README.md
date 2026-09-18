@@ -80,6 +80,29 @@ Only `raw` and non-gold tool-assisted runs should be considered for fair ranking
 
 The July 3 result is a pilot evaluation, not a leaderboard claim.
 
+## Regression tests and CI
+
+The `SQLite regressions` workflow runs on every push and pull request with
+Python 3.13.7 and uv 0.11.19. Actions are pinned to commit SHAs, and the Linux
+uv archive is verified against its release SHA-256. After runtime setup, checks
+run offline with no third-party Python packages or benchmark downloads.
+
+Run the same suite from the repository root with the pinned runtime installed:
+
+```sh
+uv run --python 3.13.7 --no-project --no-sync --offline python -m compileall -q scripts tests
+uv run --python 3.13.7 --no-project --no-sync --offline python -m unittest discover -s tests -v
+```
+
+The 12 tests execute the real SQLite evaluator and comparator against temporary
+fixture databases. They cover denied mutations and unchanged database contents,
+safe literals/comments/identifiers, instruction limits and connection cleanup,
+ordered versus unordered results, duplicate counts, types, NULLs, and the
+versioned evaluation/report contract. A failed test exits nonzero and fails CI.
+These are local fixture regressions, not measured model accuracy or acceptance
+of downloaded benchmarks. CI also checks Python syntax and commit whitespace;
+the repository currently has no configured formatter, linter, or type checker.
+
 ## Documentation
 
 - `docs/HARNESS.md` explains the run and evaluation flow.
