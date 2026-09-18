@@ -13,7 +13,7 @@ The harness treats benchmark content as data unless it has been reviewed separat
 - Script-like and package-like files are inventoried before execution.
 - Benchmark-provided setup scripts, `setup.py`, shell scripts, Dockerfiles, DBT package scripts, and package hooks are not executed during benchmark runs.
 - Prompts explicitly mark benchmark question, evidence, schema comments, table values, READMEs, and tool context as untrusted content.
-- The evaluator rejects dangerous SQL patterns such as `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, and `TRUNCATE`.
+- The SQLite evaluator opens existing databases with `mode=ro`, enables `query_only`, and authorizes only query reads, SELECTs, recursive queries, and functions other than extension loading. SQLite denies writes, schema changes, attachments, PRAGMAs, and transaction control independently of SQL text filtering. The existing progress handler bounds SQLite execution; connections close on success and failure.
 - Raw logs and downloaded databases are excluded from the publishable repository.
 
 ## Required Pre-Run Check
