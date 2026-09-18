@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
+          fetch-depth: 2
           persist-credentials: false
       - uses: astral-sh/setup-uv@eb1897b8dc4b5d5bfe39a428a8f2304605e0983c # v7.0.0
         with:
@@ -23,7 +24,7 @@ jobs:
       - name: Install pinned Python
         run: uv python install 3.13.7
       - name: Check whitespace
-        run: git show --format= --check HEAD
+        run: git diff --check HEAD^ HEAD
       - name: Check Python syntax
         run: uv run --python 3.13.7 --no-project --no-sync --offline python -m compileall -q scripts tests
       - name: Run SQLite regression suite
