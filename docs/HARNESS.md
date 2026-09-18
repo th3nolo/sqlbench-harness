@@ -56,3 +56,17 @@ Disallowed for leaderboard scoring:
 - Gold-vs-predicted comparison feedback.
 - Manual per-question answer templates.
 - Dataset-specific hard-coded solutions.
+
+## SQLite safety reporting
+
+The SQLite evaluator relies on its read-only connection and query-operation
+permission boundary, not a blacklist of words in SQL text. Literals, comments,
+and quoted identifiers containing words such as `update` or `delete` are valid
+query content. This applies equally to gold queries and predictions, so benign
+gold queries remain in the evaluation denominator.
+
+The per-case `dangerous_sql` field is true when prediction execution is refused
+by the evaluator's permission policy. It is false for ordinary SQL syntax/runtime
+errors and for cases whose execution was skipped; it is not a static safety
+certification for unexecuted SQL. Actual gold execution errors still exclude a
+case from `total_evaluated` and remain visible in `gold_error`.
