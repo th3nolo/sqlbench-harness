@@ -14,10 +14,7 @@ from typing import Any
 from benchmark_registry import ROOT, canonical_name, load_cases
 
 
-DANGEROUS_SQL = re.compile(
-    r"\b(drop|delete|update|insert|alter|truncate|grant|revoke|create\s+user|outfile|load_file)\b",
-    re.I,
-)
+SQL_PERMISSION_DENIED = "dangerous SQL refused"
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -46,8 +43,6 @@ def normalize_rows(rows: list[tuple[Any, ...]]) -> list[list[Any]]:
 def execute_sqlite(db_path: Path, sql: str, *, instruction_limit: int = 500_000) -> tuple[list[list[Any]] | None, str | None]:
     if not sql.strip():
         return None, "empty SQL"
-    if DANGEROUS_SQL.search(sql):
-        return None, "dangerous SQL refused"
     conn = None
     permission_denied = False
     try:
@@ -79,12 +74,12 @@ def execute_sqlite(db_path: Path, sql: str, *, instruction_limit: int = 500_000)
         conn.set_progress_handler(progress_handler, 100)
         cursor = conn.execute(sql)
         if cursor.description is None:
-            return None, "dangerous SQL refused"
+            return None, SQL_PERMISSION_DENIED
         rows = cursor.fetchall()
         return normalize_rows(rows), None
     except Exception as exc:
         if permission_denied:
-            return None, "dangerous SQL refused"
+            return None, SQL_PERMISSION_DENIED
         return None, str(exc)
     finally:
         if conn is not None:
@@ -171,7 +166,7 @@ def main() -> int:
             "mode": case.get("mode"),
             "dialect": case.get("dialect"),
             "has_prediction": bool(pred_sql.strip()),
-            "dangerous_sql": bool(DANGEROUS_SQL.search(pred_sql)),
+            "dangerous_sql": False,
             "skipped": False,
             "skip_reason": None,
             "exact_match": False,
@@ -192,6 +187,7 @@ def main() -> int:
             pred_rows, pred_error = execute_sqlite(db_path, pred_sql)
             row["gold_error"] = gold_error
             row["pred_error"] = pred_error
+            row["dangerous_sql"] = pred_error == SQL_PERMISSION_DENIED
             row["gold_row_count"] = len(gold_rows or [])
             row["pred_row_count"] = len(pred_rows or [])
             row["exact_match"] = bool(gold_error is None and pred_error is None and gold_rows == pred_rows)
