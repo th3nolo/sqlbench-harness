@@ -27,6 +27,9 @@ Repair loops may execute the predicted SQL and provide non-gold syntax or runtim
 5. Evaluate SQL execution with `scripts/eval_sql_benchmark.py`.
 6. Produce a compact report with `scripts/report_sql_benchmarks.py`.
 
+Local execution scores use the versioned [SQLite result comparison policy](RESULT_COMPARISON.md).
+These are harness scores, not benchmark-native scores; keep comparison versions separate.
+
 ## Model Contract
 
 Each model response should contain:

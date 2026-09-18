@@ -8,6 +8,7 @@ import datetime as dt
 import json
 import re
 import sqlite3
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -25,19 +26,54 @@ def normalize_sql(sql: str) -> str:
     return re.sub(r"\s+", " ", sql.strip().strip(";").lower())
 
 
-def normalize_value(value: Any) -> Any:
-    if isinstance(value, bytes):
-        return value.hex()
-    if isinstance(value, float):
-        return round(value, 8)
-    if isinstance(value, str):
-        return value.strip()
-    return value
+RESULT_COMPARISON_VERSION = "sqlite-result-v2"
+
+# SQLite lexical forms, not a SQL grammar. Quoted tokens and comments must be
+# consumed whole so their contents cannot affect parenthesis depth or keywords.
+SQL_TOKENS = re.compile(
+    r"--[^\n]*(?:\n|$)|/\*[\s\S]*?(?:\*/|$)"
+    r"|'(?:''|[^'])*'|\"(?:\"\"|[^\"])*\"|`(?:``|[^`])*`|\[[^\]]*\]"
+    r"|[\w$]+|[^\s]",
+    re.UNICODE,
+)
+
+
+def has_outer_order_by(sql: str) -> bool:
+    """Detect outer SQLite ordering, excluding CTEs, subqueries and windows.
+
+    Used only for successfully executed gold SQL; SQLite validates the syntax.
+    This deliberately does not infer ordering from the prediction or question.
+    """
+    depth = 0
+    previous = None
+    for match in SQL_TOKENS.finditer(sql):
+        token = match.group()
+        if token.startswith(("--", "/*")):
+            continue
+        if token == "(":
+            depth += 1
+        elif token == ")":
+            depth -= 1
+        elif depth == 0 and previous == "ORDER" and token.upper() == "BY":
+            return True
+        previous = token.upper() if depth == 0 else None
+    return False
 
 
 def normalize_rows(rows: list[tuple[Any, ...]]) -> list[list[Any]]:
-    normalized = [[normalize_value(value) for value in row] for row in rows]
-    return sorted(normalized, key=lambda row: json.dumps(row, sort_keys=True, default=str))
+    """Retain SQLite values and row order; comparison is a separate operation."""
+    return [list(row) for row in rows]
+
+
+def compare_rows(gold: list[list[Any]], predicted: list[list[Any]], *, ordered: bool) -> bool:
+    """Compare sequences or duplicate-preserving bags, with positional columns.
+
+    SQLite-returned None, str and bytes remain distinct. INTEGER and REAL compare
+    by exact numeric value (1 == 1.0), without rounding or string coercion.
+    """
+    if ordered:
+        return gold == predicted
+    return Counter(map(tuple, gold)) == Counter(map(tuple, predicted))
 
 
 def execute_sqlite(db_path: Path, sql: str, *, instruction_limit: int = 500_000) -> tuple[list[list[Any]] | None, str | None]:
@@ -172,6 +208,7 @@ def main() -> int:
             "exact_match": False,
             "gold_error": None,
             "pred_error": None,
+            "result_comparison": None,
         }
         if case.get("mode") != "sql":
             row["skipped"] = True
@@ -190,7 +227,12 @@ def main() -> int:
             row["dangerous_sql"] = pred_error == SQL_PERMISSION_DENIED
             row["gold_row_count"] = len(gold_rows or [])
             row["pred_row_count"] = len(pred_rows or [])
-            row["exact_match"] = bool(gold_error is None and pred_error is None and gold_rows == pred_rows)
+            if gold_error is None:
+                ordered = has_outer_order_by(gold_sql)
+                row["result_comparison"] = "ordered" if ordered else "unordered_multiset"
+                row["exact_match"] = bool(
+                    pred_error is None and compare_rows(gold_rows, pred_rows, ordered=ordered)
+                )
         details.append(row)
 
     evaluated = [row for row in details if not row["skipped"] and not row.get("gold_error")]
@@ -199,6 +241,8 @@ def main() -> int:
     skipped = sum(1 for row in details if row["skipped"])
     parseable_or_executable = sum(1 for row in evaluated if not row.get("pred_error"))
     summary = {
+        "result_comparison_version": RESULT_COMPARISON_VERSION,
+        "metric_scope": "harness_local_sqlite_not_benchmark_native",
         "benchmark": benchmark,
         "run_dir": str(run_dir.relative_to(ROOT)) if run_dir.is_relative_to(ROOT) else str(run_dir),
         "generated_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
