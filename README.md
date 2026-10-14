@@ -94,11 +94,13 @@ uv run --python 3.13.7 --no-project --no-sync --offline python -m compileall -q 
 uv run --python 3.13.7 --no-project --no-sync --offline python -m unittest discover -s tests -v
 ```
 
-The 12 tests execute the real SQLite evaluator and comparator against temporary
-fixture databases. They cover denied mutations and unchanged database contents,
+The regression tests execute the real SQLite evaluator and comparator against
+temporary fixture databases. They cover denied mutations and unchanged database contents,
 safe literals/comments/identifiers, instruction limits and connection cleanup,
 ordered versus unordered results, duplicate counts, types, NULLs, and the
-versioned evaluation/report contract. A failed test exits nonzero and fails CI.
+versioned evaluation/report contract. Fairness regressions cover short gold SQL
+leaks such as `SELECT 1`, clean prompts, and score eligibility in saved audits
+and reports. A failed test exits nonzero and fails CI.
 These are local fixture regressions, not measured model accuracy or acceptance
 of downloaded benchmarks. CI also checks Python syntax and commit whitespace;
 the repository currently has no configured formatter, linter, or type checker.
