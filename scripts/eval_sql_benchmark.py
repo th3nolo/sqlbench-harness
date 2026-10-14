@@ -146,10 +146,11 @@ def audit_run(run_dir: Path, cases: list[dict[str, Any]], run_metadata: dict[str
         if not case:
             continue
         gold_sql = normalize_sql(case.get("gold_sql", ""))
-        if len(gold_sql) < 40:
+        if not gold_sql:
             continue
         prompt_norm = normalize_sql(prompt_path.read_text(encoding="utf-8", errors="ignore"))
-        if gold_sql and gold_sql in prompt_norm:
+        # Check short queries too, without matching SELECT 1 inside SELECT 10 or SELECT 1.0.
+        if re.search(rf"(?<![\w$]){re.escape(gold_sql)}(?![\w$]|\.\d)", prompt_norm):
             findings.append(
                 {
                     "severity": "critical",
